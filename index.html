@@ -6,8 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Joel Hub">
-<title>Joel Hub</title>
+<meta name="apple-mobile-web-app-title" content="JH">
+<title>JH</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='black'/><text x='50' y='72' font-family='Georgia,serif' font-size='52' font-weight='bold' fill='%23f0c040' text-anchor='middle'>JH</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -47,18 +48,27 @@
     border-bottom: 1px solid var(--border);
     z-index: 100;
   }
-  .header-title {
+  .header-weather {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1;
+  }
+  .weather-icon { font-size: 26px; line-height: 1; }
+  .weather-info { display: flex; flex-direction: column; gap: 1px; }
+  .weather-temp {
     font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 20px;
+    font-size: 20px; font-weight: 800;
     letter-spacing: -0.5px;
+    color: var(--accent);
   }
-  .header-title span { color: var(--accent); }
+  .weather-desc { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .weather-city { font-size: 11px; color: var(--muted); }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .header-time {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 500;
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--text);
   }
+  .header-date { font-size: 11px; color: var(--muted); }
 
   /* ── MAIN CONTENT AREA ── */
   .main {
@@ -213,7 +223,28 @@
     cursor: pointer;
   }
 
-  /* ── CALCULATOR ── */
+  .calc-grid-mem {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .calc-btn.mem {
+    background: rgba(240,192,64,0.08);
+    border-color: rgba(240,192,64,0.2);
+    color: var(--accent);
+    font-size: 12px; font-weight: 700;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .calc-btn.mem:active { background: rgba(240,192,64,0.2); }
+  .calc-mem-indicator {
+    font-size: 11px; color: var(--accent);
+    text-align: left; margin-top: 4px;
+    min-height: 14px; font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    letter-spacing: 1px;
+  }
   .calc-display {
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -396,8 +427,18 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div class="header-title">Joel <span>Hub</span></div>
-  <div class="header-time" id="clock">--:--</div>
+  <div class="header-weather">
+    <div class="weather-icon" id="w-icon">⏳</div>
+    <div class="weather-info">
+      <div class="weather-temp" id="w-temp">--°</div>
+      <div class="weather-desc" id="w-desc">Chargement...</div>
+      <div class="weather-city" id="w-city"></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-time" id="clock">--:--</div>
+    <div class="header-date" id="header-date"></div>
+  </div>
 </div>
 
 <!-- MAIN PANELS -->
@@ -409,10 +450,10 @@
     <div class="home-sub" id="home-sub">Chargement...</div>
 
     <div class="home-date-card">
-      <div class="home-date-day" id="date-day">--</div>
+      <div class="home-date-day" id="date-day"></div>
       <div class="home-date-info">
-        <div class="home-date-month" id="date-month">---</div>
-        <div class="home-date-year" id="date-year">----</div>
+        <div class="home-date-month" id="date-month"></div>
+        <div class="home-date-year" id="date-year"></div>
       </div>
     </div>
 
@@ -507,6 +548,14 @@
     <div class="calc-display">
       <div class="calc-prev" id="calc-prev"></div>
       <div class="calc-current" id="calc-display">0</div>
+      <div class="calc-mem-indicator" id="calc-mem-ind"></div>
+    </div>
+    <div class="calc-grid-mem">
+      <button class="calc-btn mem" onclick="calcMem('mc')">MC</button>
+      <button class="calc-btn mem" onclick="calcMem('mr')">MR</button>
+      <button class="calc-btn mem" onclick="calcMem('m+')">M+</button>
+      <button class="calc-btn mem" onclick="calcMem('m-')">M−</button>
+      <button class="calc-btn mem" onclick="calcMem('ms')">MS</button>
     </div>
     <div class="calc-grid">
       <button class="calc-btn clear" onclick="calcAction('clear')">C</button>
@@ -592,19 +641,60 @@ function updateClock() {
   const h = String(now.getHours()).padStart(2,'0');
   const m = String(now.getMinutes()).padStart(2,'0');
   document.getElementById('clock').textContent = h + ':' + m;
-
-  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  document.getElementById('date-day').textContent = now.getDate();
-  document.getElementById('date-month').textContent = months[now.getMonth()];
-  document.getElementById('date-year').textContent = days[now.getDay()] + ' ' + now.getFullYear();
-
-  const hour = now.getHours();
-  let greet = hour < 12 ? 'Bonne matinée 👋' : hour < 18 ? 'Bonne après-midi 👋' : 'Bonne soirée 🌙';
-  document.getElementById('home-sub').textContent = greet;
+  const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const months = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  const monthsFull = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const daysFull = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  document.getElementById('header-date').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()];
+  const dd = document.getElementById('date-day');
+  const dm = document.getElementById('date-month');
+  const dy = document.getElementById('date-year');
+  const sub = document.getElementById('home-sub');
+  if(dd) dd.textContent = now.getDate();
+  if(dm) dm.textContent = monthsFull[now.getMonth()];
+  if(dy) dy.textContent = daysFull[now.getDay()] + ' ' + now.getFullYear();
+  if(sub) sub.textContent = now.getHours() < 12 ? 'Bonne matinée 👋' : now.getHours() < 18 ? 'Bonne après-midi 👋' : 'Bonne soirée 🌙';
 }
 updateClock();
 setInterval(updateClock, 10000);
+
+// ── WEATHER ──
+const WX_ICONS = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'❄️',73:'❄️',75:'❄️',77:'🌨️',80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'};
+const WX_DESC = {0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine légère',53:'Bruine',55:'Bruine forte',61:'Pluie légère',63:'Pluie',65:'Pluie forte',71:'Neige légère',73:'Neige',75:'Neige forte',77:'Grésil',80:'Averses légères',81:'Averses',82:'Averses fortes',85:'Averses de neige',86:'Averses de neige',95:'Orage',96:'Orage avec grêle',99:'Orage violent'};
+
+async function fetchWeather() {
+  try {
+    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {timeout:8000}));
+    const {latitude: lat, longitude: lon} = pos.coords;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const code = d.current.weathercode;
+    const temp = Math.round(d.current.temperature_2m);
+    const tmax = Math.round(d.daily.temperature_2m_max[0]);
+    const tmin = Math.round(d.daily.temperature_2m_min[0]);
+    document.getElementById('w-icon').textContent = WX_ICONS[code] || '🌡️';
+    document.getElementById('w-temp').textContent = temp + '°C';
+    document.getElementById('w-desc').textContent = WX_DESC[code] || 'Météo';
+    document.getElementById('w-city').textContent = `↑${tmax}° ↓${tmin}°`;
+  } catch(e) {
+    // Fallback si géoloc refusée : Fécamp par défaut
+    try {
+      const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=49.76&longitude=0.37&current=temperature_2m,weathercode&timezone=auto');
+      const d = await r.json();
+      const code = d.current.weathercode;
+      const temp = Math.round(d.current.temperature_2m);
+      document.getElementById('w-icon').textContent = WX_ICONS[code] || '🌡️';
+      document.getElementById('w-temp').textContent = temp + '°C';
+      document.getElementById('w-desc').textContent = WX_DESC[code] || 'Météo';
+      document.getElementById('w-city').textContent = 'Fécamp';
+    } catch(e2) {
+      document.getElementById('w-desc').textContent = 'Météo indisponible';
+    }
+  }
+}
+fetchWeather();
+setInterval(fetchWeather, 1800000); // refresh toutes les 30 min
 
 // ── TABS ──
 const TABS = ['home','agenda','notes','calc','gmail','orange','claude'];
@@ -725,7 +815,33 @@ function calcAction(key) {
   updateDisplay(calcResult, calcExpr);
 }
 
-// keyboard support for calculator
+// ── CALCULATOR MEMORY ──
+let calcMemory = 0;
+
+function calcMem(action) {
+  const current = parseFloat(calcResult) || 0;
+  const ind = document.getElementById('calc-mem-ind');
+  switch(action) {
+    case 'mc': calcMemory = 0; ind.textContent = ''; break;
+    case 'mr':
+      calcResult = String(calcMemory);
+      updateDisplay(calcResult, calcExpr);
+      ind.textContent = calcMemory !== 0 ? 'M = ' + calcMemory : '';
+      break;
+    case 'm+':
+      calcMemory += current;
+      ind.textContent = 'M = ' + calcMemory;
+      break;
+    case 'm-':
+      calcMemory -= current;
+      ind.textContent = 'M = ' + calcMemory;
+      break;
+    case 'ms':
+      calcMemory = current;
+      ind.textContent = 'M = ' + calcMemory;
+      break;
+  }
+}
 document.addEventListener('keydown', e => {
   const panel = document.getElementById('panel-calc');
   if (!panel.classList.contains('active')) return;
