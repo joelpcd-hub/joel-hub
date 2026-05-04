@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Joel Hub">
+<title>Joel Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e12;
+    --surface: #16161d;
+    --surface2: #1e1e28;
+    --border: rgba(255,255,255,0.07);
+    --accent: #f0c040;
+    --accent2: #5b8aff;
+    --accent3: #ff6b6b;
+    --text: #f0eff5;
+    --muted: #7a7a92;
+    --radius: 18px;
+    --tab-h: 72px;
+    --header-h: 64px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    background: rgba(14,14,18,0.92);
+    backdrop-filter: blur(20px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+  }
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+  .header-title span { color: var(--accent); }
+  .header-time {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ── MAIN CONTENT AREA ── */
+  .main {
+    position: fixed;
+    top: var(--header-h);
+    bottom: var(--tab-h);
+    left: 0; right: 0;
+    overflow: hidden;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 16px 24px;
+    display: none;
+    animation: fadeIn 0.25s ease;
+  }
+  .panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── IFRAME PANEL ── */
+  .panel-iframe {
+    position: absolute; inset: 0;
+    display: none;
+    overflow: hidden;
+  }
+  .panel-iframe.active { display: flex; flex-direction: column; }
+  .panel-iframe iframe {
+    width: 100%; flex: 1;
+    border: none;
+    background: #fff;
+  }
+  .iframe-banner {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--muted);
+  }
+  .iframe-banner .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .open-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: #000;
+    border: none; border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px; font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    margin-top: 20px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .card:active { transform: scale(0.98); background: var(--surface2); }
+
+  /* ── NOTES ── */
+  .notes-grid { display: flex; flex-direction: column; gap: 10px; }
+  .note-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+  }
+  .note-card.color-yellow { border-left: 3px solid #f0c040; }
+  .note-card.color-blue { border-left: 3px solid #5b8aff; }
+  .note-card.color-red { border-left: 3px solid #ff6b6b; }
+  .note-card.color-green { border-left: 3px solid #5bff9f; }
+
+  .note-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .note-date { font-size: 11px; color: var(--muted); }
+  .note-delete {
+    background: none; border: none;
+    color: var(--muted); font-size: 18px;
+    cursor: pointer; padding: 0 4px;
+    line-height: 1;
+  }
+  .note-text {
+    font-size: 14px; line-height: 1.5;
+    color: var(--text); word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .add-note-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .add-note-area textarea {
+    width: 100%; background: none; border: none;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; resize: none; outline: none;
+    min-height: 70px; line-height: 1.5;
+  }
+  .add-note-area textarea::placeholder { color: var(--muted); }
+  .note-actions {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .color-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.15s;
+  }
+  .color-dot:active { transform: scale(1.2); }
+  .color-dot.selected { border-color: white; }
+  .add-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: #000;
+    border: none; border-radius: 20px;
+    padding: 7px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ── CALCULATOR ── */
+  .calc-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 16px;
+    margin-bottom: 12px;
+    text-align: right;
+  }
+  .calc-prev { font-size: 14px; color: var(--muted); min-height: 20px; }
+  .calc-current {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px; font-weight: 700;
+    letter-spacing: -2px;
+    overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .calc-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 600;
+    height: 64px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .calc-btn:active { transform: scale(0.93); background: var(--surface2); }
+  .calc-btn.op { background: rgba(91,138,255,0.15); color: var(--accent2); }
+  .calc-btn.op:active { background: rgba(91,138,255,0.3); }
+  .calc-btn.equals { background: var(--accent); color: #000; border-color: transparent; }
+  .calc-btn.equals:active { background: #d4a930; }
+  .calc-btn.clear { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .calc-btn.clear:active { background: rgba(255,107,107,0.3); }
+  .calc-btn.zero { grid-column: span 2; }
+
+  /* ── HOME / SHORTCUTS ── */
+  .shortcuts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .shortcut-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-decoration: none;
+    color: var(--text);
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: 12px;
+    transition: transform 0.15s, background 0.15s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .shortcut-card:active { transform: scale(0.96); background: var(--surface2); }
+  .shortcut-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .shortcut-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    line-height: 1.2;
+  }
+  .shortcut-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── BOTTOM TABS ── */
+  .tabs {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--tab-h);
+    background: rgba(14,14,18,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 4px;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    height: 100%;
+    cursor: pointer;
+    border: none; background: none;
+    color: var(--muted);
+    transition: color 0.2s;
+    padding: 0;
+  }
+  .tab.active { color: var(--accent); }
+  .tab-icon { font-size: 22px; line-height: 1; }
+  .tab-label { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+
+  /* ── HOME PANEL ── */
+  .home-greeting {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .home-greeting span { color: var(--accent); }
+  .home-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+  .home-date-card {
+    background: linear-gradient(135deg, rgba(240,192,64,0.15), rgba(91,138,255,0.08));
+    border: 1px solid rgba(240,192,64,0.25);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .home-date-day {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px; font-weight: 800;
+    color: var(--accent); letter-spacing: -2px;
+  }
+  .home-date-info { text-align: right; }
+  .home-date-month { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; }
+  .home-date-year { font-size: 13px; color: var(--muted); }
+
+  /* ── EXTERNAL LINK PANEL ── */
+  .ext-panel {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px;
+    padding: 30px;
+    text-align: center;
+    animation: fadeIn 0.25s ease;
+  }
+  .ext-panel.active { display: flex; }
+  .ext-big-icon { font-size: 64px; }
+  .ext-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800;
+  }
+  .ext-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .ext-open-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    text-decoration: none;
+    border-radius: 50px;
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 800;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .ext-open-btn:active { opacity: 0.8; transform: scale(0.97); }
+  .ext-open-btn.blue { background: var(--accent2); color: #fff; }
+  .ext-open-btn.orange { background: #ff7b2c; color: #fff; }
+  .ext-open-btn.purple { background: #9b59b6; color: #fff; }
+
+  /* Empty notes */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+  .empty-state .big { font-size: 40px; margin-bottom: 12px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">Joel <span>Hub</span></div>
+  <div class="header-time" id="clock">--:--</div>
+</div>
+
+<!-- MAIN PANELS -->
+<div class="main">
+
+  <!-- HOME -->
+  <div class="panel active" id="panel-home">
+    <div class="home-greeting">Bonjour,<br><span>Joel.</span></div>
+    <div class="home-sub" id="home-sub">Chargement...</div>
+
+    <div class="home-date-card">
+      <div class="home-date-day" id="date-day">--</div>
+      <div class="home-date-info">
+        <div class="home-date-month" id="date-month">---</div>
+        <div class="home-date-year" id="date-year">----</div>
+      </div>
+    </div>
+
+    <div class="section-title">Accès rapide</div>
+    <div class="shortcuts-grid">
+      <div class="shortcut-card" onclick="switchTab('agenda')">
+        <div class="shortcut-icon" style="background:rgba(66,133,244,0.15);">📅</div>
+        <div>
+          <div class="shortcut-label">Agenda</div>
+          <div class="shortcut-sub">Google Calendar</div>
+        </div>
+      </div>
+      <div class="shortcut-card" onclick="switchTab('gmail')">
+        <div class="shortcut-icon" style="background:rgba(234,67,53,0.15);">✉️</div>
+        <div>
+          <div class="shortcut-label">Gmail</div>
+          <div class="shortcut-sub">Boîte mail Google</div>
+        </div>
+      </div>
+      <div class="shortcut-card" onclick="switchTab('notes')">
+        <div class="shortcut-icon" style="background:rgba(240,192,64,0.15);">📝</div>
+        <div>
+          <div class="shortcut-label">Mémos</div>
+          <div class="shortcut-sub">Post-it rapides</div>
+        </div>
+      </div>
+      <div class="shortcut-card" onclick="switchTab('calc')">
+        <div class="shortcut-icon" style="background:rgba(91,255,159,0.15);">🔢</div>
+        <div>
+          <div class="shortcut-label">Calculatrice</div>
+          <div class="shortcut-sub">Simple & rapide</div>
+        </div>
+      </div>
+      <div class="shortcut-card" onclick="switchTab('orange')">
+        <div class="shortcut-icon" style="background:rgba(255,123,44,0.15);">🟠</div>
+        <div>
+          <div class="shortcut-label">Orange Mail</div>
+          <div class="shortcut-sub">Boîte Orange</div>
+        </div>
+      </div>
+      <div class="shortcut-card" onclick="switchTab('claude')">
+        <div class="shortcut-icon" style="background:rgba(155,89,182,0.15);">🤖</div>
+        <div>
+          <div class="shortcut-label">Claude AI</div>
+          <div class="shortcut-sub">Assistant IA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="ext-panel" id="panel-agenda">
+    <div class="ext-big-icon">📅</div>
+    <div class="ext-title">Google Agenda</div>
+    <div class="ext-desc">Accède à ton calendrier Google directement dans l'application.</div>
+    <a href="https://calendar.google.com" target="_blank" class="ext-open-btn blue">Ouvrir l'agenda →</a>
+  </div>
+
+  <!-- GMAIL -->
+  <div class="ext-panel" id="panel-gmail">
+    <div class="ext-big-icon">✉️</div>
+    <div class="ext-title">Gmail</div>
+    <div class="ext-desc">Consulte et gère ta boîte mail Google en un tap.</div>
+    <a href="https://mail.google.com" target="_blank" class="ext-open-btn" style="background:#ea4335;">Ouvrir Gmail →</a>
+  </div>
+
+  <!-- NOTES -->
+  <div class="panel" id="panel-notes">
+    <div class="section-title">Nouveau mémo</div>
+    <div class="add-note-area">
+      <textarea id="note-input" placeholder="Écris ton mémo ici..." rows="3"></textarea>
+      <div class="note-actions">
+        <div class="color-dot selected" style="background:#f0c040;" data-color="yellow" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#5b8aff;" data-color="blue" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#ff6b6b;" data-color="red" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#5bff9f;" data-color="green" onclick="selectColor(this)"></div>
+        <button class="add-btn" onclick="addNote()">+ Ajouter</button>
+      </div>
+    </div>
+
+    <div class="section-title">Mes mémos</div>
+    <div class="notes-grid" id="notes-list">
+      <div class="empty-state">
+        <div class="big">📝</div>
+        Pas encore de mémo.<br>Écris ton premier ci-dessus !
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULATRICE -->
+  <div class="panel" id="panel-calc">
+    <div class="calc-display">
+      <div class="calc-prev" id="calc-prev"></div>
+      <div class="calc-current" id="calc-display">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="calc-btn clear" onclick="calcAction('clear')">C</button>
+      <button class="calc-btn op" onclick="calcAction('sign')">+/-</button>
+      <button class="calc-btn op" onclick="calcAction('%')">%</button>
+      <button class="calc-btn op" onclick="calcAction('÷')">÷</button>
+
+      <button class="calc-btn" onclick="calcAction('7')">7</button>
+      <button class="calc-btn" onclick="calcAction('8')">8</button>
+      <button class="calc-btn" onclick="calcAction('9')">9</button>
+      <button class="calc-btn op" onclick="calcAction('×')">×</button>
+
+      <button class="calc-btn" onclick="calcAction('4')">4</button>
+      <button class="calc-btn" onclick="calcAction('5')">5</button>
+      <button class="calc-btn" onclick="calcAction('6')">6</button>
+      <button class="calc-btn op" onclick="calcAction('−')">−</button>
+
+      <button class="calc-btn" onclick="calcAction('1')">1</button>
+      <button class="calc-btn" onclick="calcAction('2')">2</button>
+      <button class="calc-btn" onclick="calcAction('3')">3</button>
+      <button class="calc-btn op" onclick="calcAction('+')">+</button>
+
+      <button class="calc-btn zero" onclick="calcAction('0')">0</button>
+      <button class="calc-btn" onclick="calcAction('.')">.</button>
+      <button class="calc-btn equals" onclick="calcAction('=')">=</button>
+    </div>
+  </div>
+
+  <!-- ORANGE MAIL -->
+  <div class="ext-panel" id="panel-orange">
+    <div class="ext-big-icon">🟠</div>
+    <div class="ext-title">Orange Mail</div>
+    <div class="ext-desc">Accède à ta boîte mail Orange directement.</div>
+    <a href="https://webmail.orange.fr" target="_blank" class="ext-open-btn orange">Ouvrir Orange Mail →</a>
+  </div>
+
+  <!-- CLAUDE -->
+  <div class="ext-panel" id="panel-claude">
+    <div class="ext-big-icon">🤖</div>
+    <div class="ext-title">Claude AI</div>
+    <div class="ext-desc">Accède à l'assistant Claude directement depuis ton Hub.</div>
+    <a href="https://claude.ai" target="_blank" class="ext-open-btn purple">Ouvrir Claude →</a>
+  </div>
+
+</div>
+
+<!-- BOTTOM TABS -->
+<div class="tabs">
+  <button class="tab active" id="tab-home" onclick="switchTab('home')">
+    <span class="tab-icon">⌂</span>
+    <span class="tab-label">Hub</span>
+  </button>
+  <button class="tab" id="tab-agenda" onclick="switchTab('agenda')">
+    <span class="tab-icon">📅</span>
+    <span class="tab-label">Agenda</span>
+  </button>
+  <button class="tab" id="tab-notes" onclick="switchTab('notes')">
+    <span class="tab-icon">📝</span>
+    <span class="tab-label">Mémos</span>
+  </button>
+  <button class="tab" id="tab-calc" onclick="switchTab('calc')">
+    <span class="tab-icon">🔢</span>
+    <span class="tab-label">Calc</span>
+  </button>
+  <button class="tab" id="tab-gmail" onclick="switchTab('gmail')">
+    <span class="tab-icon">✉️</span>
+    <span class="tab-label">Gmail</span>
+  </button>
+  <button class="tab" id="tab-orange" onclick="switchTab('orange')">
+    <span class="tab-icon">🟠</span>
+    <span class="tab-label">Orange</span>
+  </button>
+  <button class="tab" id="tab-claude" onclick="switchTab('claude')">
+    <span class="tab-icon">🤖</span>
+    <span class="tab-label">Claude</span>
+  </button>
+</div>
+
+<script>
+// ── CLOCK + DATE ──
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = h + ':' + m;
+
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('date-day').textContent = now.getDate();
+  document.getElementById('date-month').textContent = months[now.getMonth()];
+  document.getElementById('date-year').textContent = days[now.getDay()] + ' ' + now.getFullYear();
+
+  const hour = now.getHours();
+  let greet = hour < 12 ? 'Bonne matinée 👋' : hour < 18 ? 'Bonne après-midi 👋' : 'Bonne soirée 🌙';
+  document.getElementById('home-sub').textContent = greet;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ── TABS ──
+const TABS = ['home','agenda','notes','calc','gmail','orange','claude'];
+function switchTab(id) {
+  TABS.forEach(t => {
+    const panel = document.getElementById('panel-' + t);
+    const tab = document.getElementById('tab-' + t);
+    if (panel) panel.classList.remove('active');
+    if (tab) tab.classList.remove('active');
+  });
+  const panel = document.getElementById('panel-' + id);
+  const tab = document.getElementById('tab-' + id);
+  if (panel) panel.classList.add('active');
+  if (tab) tab.classList.add('active');
+}
+
+// ── NOTES ──
+let notes = JSON.parse(localStorage.getItem('joel_notes') || '[]');
+let selectedColor = 'yellow';
+
+function selectColor(el) {
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColor = el.dataset.color;
+}
+
+function saveNotes() {
+  localStorage.setItem('joel_notes', JSON.stringify(notes));
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (notes.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="big">📝</div>Pas encore de mémo.<br>Écris ton premier ci-dessus !</div>';
+    return;
+  }
+  list.innerHTML = notes.slice().reverse().map((n, ri) => {
+    const i = notes.length - 1 - ri;
+    return `<div class="note-card color-${n.color}">
+      <div class="note-header">
+        <span class="note-date">${n.date}</span>
+        <button class="note-delete" onclick="deleteNote(${i})">×</button>
+      </div>
+      <div class="note-text">${n.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>`;
+  }).join('');
+}
+
+function addNote() {
+  const input = document.getElementById('note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const now = new Date();
+  const date = now.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+  notes.push({ text, color: selectedColor, date });
+  saveNotes();
+  renderNotes();
+  input.value = '';
+}
+
+function deleteNote(i) {
+  notes.splice(i, 1);
+  saveNotes();
+  renderNotes();
+}
+
+renderNotes();
+
+// ── CALCULATOR ──
+let calcExpr = '';
+let calcResult = '0';
+let justCalc = false;
+
+function updateDisplay(val, prev) {
+  document.getElementById('calc-display').textContent = val || '0';
+  document.getElementById('calc-prev').textContent = prev || '';
+}
+
+function calcAction(key) {
+  const ops = ['÷','×','−','+'];
+  if (key === 'clear') {
+    calcExpr = ''; calcResult = '0'; justCalc = false;
+    updateDisplay('0',''); return;
+  }
+  if (key === 'sign') {
+    if (calcResult !== '0') {
+      calcResult = calcResult.startsWith('-') ? calcResult.slice(1) : '-' + calcResult;
+      updateDisplay(calcResult, calcExpr); }
+    return;
+  }
+  if (key === '%') {
+    const v = parseFloat(calcResult);
+    if (!isNaN(v)) { calcResult = String(v / 100); updateDisplay(calcResult, calcExpr); }
+    return;
+  }
+  if (key === '=') {
+    if (!calcExpr) return;
+    const fullExpr = calcExpr + calcResult;
+    const safe = fullExpr.replace(/÷/g,'/').replace(/×/g,'*').replace(/−/g,'-');
+    try {
+      const res = Function('"use strict"; return (' + safe + ')')();
+      const rounded = parseFloat(res.toFixed(10));
+      updateDisplay(String(rounded), fullExpr + ' =');
+      calcResult = String(rounded); calcExpr = ''; justCalc = true;
+    } catch(e) { updateDisplay('Erreur',''); calcExpr = ''; calcResult = '0'; }
+    return;
+  }
+  if (ops.includes(key)) {
+    if (justCalc) { calcExpr = calcResult + key; calcResult = '0'; justCalc = false; }
+    else { calcExpr += calcResult + key; calcResult = '0'; }
+    updateDisplay('0', calcExpr); return;
+  }
+  // digits and dot
+  if (justCalc) { calcResult = '0'; justCalc = false; }
+  if (key === '.' && calcResult.includes('.')) return;
+  if (calcResult === '0' && key !== '.') calcResult = key;
+  else calcResult += key;
+  updateDisplay(calcResult, calcExpr);
+}
+
+// keyboard support for calculator
+document.addEventListener('keydown', e => {
+  const panel = document.getElementById('panel-calc');
+  if (!panel.classList.contains('active')) return;
+  const map = { '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9','.':'.','Enter':'=','Backspace':'back','+':'+','-':'−','*':'×','/':'÷','Escape':'clear','%':'%' };
+  if (map[e.key]) {
+    if (e.key === 'Backspace') {
+      if (calcResult.length > 1) calcResult = calcResult.slice(0,-1);
+      else calcResult = '0';
+      updateDisplay(calcResult, calcExpr);
+    } else { calcAction(map[e.key]); }
+  }
+});
+</script>
+</body>
+</html>
